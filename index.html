@@ -11,7 +11,7 @@
         .timer { font-size: 20px; font-weight: bold; }
         .category { font-size: 18px; font-weight: bold; margin-top: 20px; }
         .image-table { display: flex; justify-content: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        .image-box { text-align: center; }
+        .image-box { text-align: center; cursor: pointer; } /* 클릭 가능하게 설정 */
         .image-box img { width: 50px; height: 53px; display: block; }
         .correct-box {
             display: inline-block;
@@ -25,7 +25,8 @@
     </style>
 </head>
 <body>
-    <div class="box" id="progressBox">[<span id="guessedChaNum">0</span>/<span id="allChaNum">0</span>]</div><button id="resetButton">게임 리셋</button>
+    <button id="resetButton">게임 리셋</button>
+    <div class="box" id="progressBox">[<span id="guessedChaNum">0</span>/<span id="allChaNum">0</span>]</div>
     <br>
     <input type="text" class="input-box" id="textInput" maxlength="10">
     <span id="correctMessage"></span>
@@ -53,13 +54,15 @@
         }
 
         function resetGame() {
-            document.getElementById("textInput").value = ""
+            if (!confirm("정말 게임을 리셋하시겠습니까?")) return; // 경고 메시지 추가
+
             guessedChaNum = 0;
             guessedCharacters.clear();
             document.getElementById("guessedChaNum").textContent = guessedChaNum;
             document.getElementById("correctMessage").textContent = "";
             document.getElementById("correctMessage").className = "";
             document.getElementById("timer").style.color = "black";
+            document.getElementById("textInput").value = "";
             startTimer();
 
             document.querySelectorAll(".image-box img").forEach(img => img.src = "images/몰루.png");
@@ -82,7 +85,14 @@
                 img.src = "images/몰루.png"; // 초기에 몰루.png
                 img.alt = name;
 
-                
+                // 클릭하면 정답 확인 기능 추가
+                img.addEventListener("click", function () {
+                    if (!guessedCharacters.has(name) && confirm(`이 학생의 정답을 보시겠습니까?`)) {
+                        document.getElementById("textInput").value = name;
+                        checkAnswer(name);
+                    }
+                });
+
                 div.appendChild(img);
                 imageTable.appendChild(div);
 
@@ -93,9 +103,7 @@
             document.body.appendChild(imageTable);
         });
 
-        document.getElementById("textInput").addEventListener("input", function () {
-            let input = this.value.trim();
-
+        function checkAnswer(input) {
             if (characterMap[input] && !guessedCharacters.has(input)) {
                 guessedCharacters.add(input);
                 guessedChaNum++;
@@ -116,8 +124,12 @@
                     document.getElementById("correctMessage").textContent = "클리어!";
                 }
 
-                //this.value = ""; // 입력 초기화
+                //document.getElementById("textInput").value = ""; // 입력 초기화
             }
+        }
+
+        document.getElementById("textInput").addEventListener("input", function () {
+            checkAnswer(this.value.trim());
         });
 
         document.getElementById("resetButton").addEventListener("click", resetGame);
