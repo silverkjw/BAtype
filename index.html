@@ -11,7 +11,7 @@
         .timer { font-size: 20px; font-weight: bold; }
         .category { font-size: 18px; font-weight: bold; margin-top: 20px; }
         .image-table { display: flex; justify-content: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
-        .image-box { text-align: center; cursor: pointer; } /* 클릭 가능하게 설정 */
+        .image-box { text-align: center; cursor: pointer; }
         .image-box img { width: 50px; height: 53px; display: block; }
         .correct-box {
             display: inline-block;
@@ -35,9 +35,21 @@
     
     <script src="characters.js"></script>
     <script>
+        let includeSeparated = confirm("이격을 포함하시겠습니까?");
+
         let guessedChaNum = 0;
-        let allChaNum = Object.values(characterData).flat().length;
+        let characterDataFiltered = {};
+
+        Object.entries(characterData).forEach(([category, names]) => {
+            let filteredNames = names.filter(name => includeSeparated || !name.includes("("));
+            if (filteredNames.length > 0) {
+                characterDataFiltered[category] = filteredNames;
+            }
+        });
+
+        let allChaNum = Object.values(characterDataFiltered).flat().length;
         document.getElementById("allChaNum").textContent = allChaNum;
+
         let timerInterval;
         let startTime;
         let guessedCharacters = new Set();
@@ -54,7 +66,7 @@
         }
 
         function resetGame() {
-            if (!confirm("정말 게임을 리셋하시겠습니까?")) return; // 경고 메시지 추가
+            if (!confirm("정말 게임을 리셋하시겠습니까?")) return;
 
             guessedChaNum = 0;
             guessedCharacters.clear();
@@ -68,8 +80,8 @@
             document.querySelectorAll(".image-box img").forEach(img => img.src = "images/몰루.png");
         }
 
-        let characterMap = {}; // 이름 -> 이미지 요소 저장
-        Object.entries(characterData).forEach(([category, names]) => {
+        let characterMap = {};
+        Object.entries(characterDataFiltered).forEach(([category, names]) => {
             let categoryElement = document.createElement("div");
             categoryElement.classList.add("category");
             categoryElement.textContent = category;
@@ -82,10 +94,9 @@
                 div.classList.add("image-box");
 
                 let img = document.createElement("img");
-                img.src = "images/몰루.png"; // 초기에 몰루.png
+                img.src = "images/몰루.png";
                 img.alt = name;
 
-                // 클릭하면 정답 확인 기능 추가
                 img.addEventListener("click", function () {
                     if (!guessedCharacters.has(name) && confirm(`이 학생의 정답을 보시겠습니까?`)) {
                         document.getElementById("textInput").value = name;
@@ -112,19 +123,15 @@
                 let { img, filePath } = characterMap[input];
                 img.src = filePath;
 
-                // 정답 메시지 표시
                 let correctMessage = document.getElementById("correctMessage");
                 correctMessage.textContent = `"${input}" 정답!`;
                 correctMessage.className = "correct-box";
 
-                // 클리어 체크
                 if (guessedChaNum === allChaNum) {
                     clearInterval(timerInterval);
                     document.getElementById("timer").style.color = "green";
                     document.getElementById("correctMessage").textContent = "클리어!";
                 }
-
-                //document.getElementById("textInput").value = ""; // 입력 초기화
             }
         }
 
