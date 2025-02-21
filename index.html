@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>캐릭터 맞추기 게임</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .box { display: inline-block; padding: 10px; border: 1px solid #000; margin: 10px; }
+        .input-box { width: 200px; height: 30px; font-size: 16px; }
+        .timer { font-size: 20px; font-weight: bold; }
+        .category { font-size: 18px; font-weight: bold; margin-top: 20px; }
+        .image-table { display: flex; justify-content: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .image-box { text-align: center; }
+        .image-box img { width: 50px; height: 53px; display: block; }
+        .correct-box {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: green;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="box" id="progressBox">[<span id="guessedChaNum">0</span>/<span id="allChaNum">0</span>]</div><button id="resetButton">게임 리셋</button>
+    <br>
+    <input type="text" class="input-box" id="textInput" maxlength="10">
+    <span id="correctMessage"></span>
+    <br>
+    <div class="timer" id="timer">00:00</div>
+    
+    <script src="characters.js"></script>
+    <script>
+        let guessedChaNum = 0;
+        let allChaNum = Object.values(characterData).flat().length;
+        document.getElementById("allChaNum").textContent = allChaNum;
+        let timerInterval;
+        let startTime;
+        let guessedCharacters = new Set();
+
+        function startTimer() {
+            startTime = Date.now();
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                let elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+                let minutes = String(Math.floor(elapsedTime / 60)).padStart(2, '0');
+                let seconds = String(elapsedTime % 60).padStart(2, '0');
+                document.getElementById("timer").textContent = `${minutes}:${seconds}`;
+            }, 1000);
+        }
+
+        function resetGame() {
+            document.getElementById("textInput").value = ""
+            guessedChaNum = 0;
+            guessedCharacters.clear();
+            document.getElementById("guessedChaNum").textContent = guessedChaNum;
+            document.getElementById("correctMessage").textContent = "";
+            document.getElementById("correctMessage").className = "";
+            document.getElementById("timer").style.color = "black";
+            startTimer();
+
+            document.querySelectorAll(".image-box img").forEach(img => img.src = "images/몰루.png");
+        }
+
+        let characterMap = {}; // 이름 -> 이미지 요소 저장
+        Object.entries(characterData).forEach(([category, names]) => {
+            let categoryElement = document.createElement("div");
+            categoryElement.classList.add("category");
+            categoryElement.textContent = category;
+
+            let imageTable = document.createElement("div");
+            imageTable.classList.add("image-table");
+
+            names.forEach(name => {
+                let div = document.createElement("div");
+                div.classList.add("image-box");
+
+                let img = document.createElement("img");
+                img.src = "images/몰루.png"; // 초기에 몰루.png
+                img.alt = name;
+
+                
+                div.appendChild(img);
+                imageTable.appendChild(div);
+
+                characterMap[name] = { img, category, filePath: `images/${category},${name}.png` };
+            });
+
+            document.body.appendChild(categoryElement);
+            document.body.appendChild(imageTable);
+        });
+
+        document.getElementById("textInput").addEventListener("input", function () {
+            let input = this.value.trim();
+
+            if (characterMap[input] && !guessedCharacters.has(input)) {
+                guessedCharacters.add(input);
+                guessedChaNum++;
+                document.getElementById("guessedChaNum").textContent = guessedChaNum;
+
+                let { img, filePath } = characterMap[input];
+                img.src = filePath;
+
+                // 정답 메시지 표시
+                let correctMessage = document.getElementById("correctMessage");
+                correctMessage.textContent = `"${input}" 정답!`;
+                correctMessage.className = "correct-box";
+
+                // 클리어 체크
+                if (guessedChaNum === allChaNum) {
+                    clearInterval(timerInterval);
+                    document.getElementById("timer").style.color = "green";
+                    document.getElementById("correctMessage").textContent = "클리어!";
+                }
+
+                //this.value = ""; // 입력 초기화
+            }
+        });
+
+        document.getElementById("resetButton").addEventListener("click", resetGame);
+
+        startTimer();
+    </script>
+</body>
+</html>
